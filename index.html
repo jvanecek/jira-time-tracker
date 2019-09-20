@@ -1,0 +1,151 @@
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js"
+    integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut"
+    crossorigin="anonymous"></script>
+
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+    crossorigin="anonymous"></script>
+  <script src="https://kit.fontawesome.com/d2076483f4.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/vue"></script>
+  
+</head>
+
+<body>
+  <template id="issue-tracker-template">
+    <tr :class="state.tracking ? 'table-success' : ''">
+      <td>
+        <button type="button" class="btn-sm" v-on:click="startTrack">
+          <i class="fas fa-stop" v-if="state.tracking"></i>
+          <i class="fas fa-play" v-else></i>
+        </button>
+      </td>
+      <td><a :href="issue.link" target="_blank">{{ issue.key }}</a></td>
+      <td>{{ issue.title }}</td>
+      <td>
+        <div class="input-group input-group-sm">
+          <input :data-jira-key="issue.key" type="text" class="form-control input-sm"
+            v-model="trackedWellFormatted()"></input></div>
+      </td>
+    </tr>
+  </template>
+
+  <div class="container">
+    <form id="issues-table" @submit="logIssuesTime">
+      <div class="card" style="margin-top: 10%;">
+        <table class="table table-sm">
+          <thead class="thead-dark">
+            <tr>
+              <th></th>
+              <th>Issue Key</th>
+              <th>Title</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="issue in issues" is="tracker" :issue="issue" :key="issue.key">
+            </tr>
+          </tbody>
+        </table>
+        <div class="card-footer text-right">
+          <input type="submit" value="Log time" class="btn btn-primary"></input>
+        </div>
+      </div>
+    </form>
+
+  </div>
+
+  <script>
+    function formatDuration(ms) {
+      let rem = ms / 1000;
+      const seconds = Math.floor(rem) % 60;
+      rem = rem / 60;
+      const minutes = Math.floor(rem) % 60;
+      rem = rem / 60
+      const hours = Math.floor(rem);
+      return (hours ? `${hours}h` : '') + (minutes ? `${minutes}m` : `${seconds}s`)
+    }
+    Vue.component('tracker', {
+      props: ['issue'],
+      template: '#issue-tracker-template',
+      data: function () {
+        return {
+          state: {
+            tracking: false,
+            tracked: 0,
+            lastTrackStarted: 0,
+            refreshTrackingID: -1
+          }
+        }
+      },
+      methods: {
+        refreshTrackingTime() {
+          var myself = this;
+          return setInterval(function () {
+            const now = new Date()
+            myself.state.tracked = now - myself.state.lastTrackStarted
+          }, 1000)
+        },
+        startTrack: function (event) {
+          this.state.tracking = !this.state.tracking
+          if (this.state.tracking) {
+            this.state.lastTrackStarted = new Date()
+            this.state.refreshTrackingID = this.refreshTrackingTime()
+          }
+          else {
+            clearInterval(this.state.refreshTrackingID)
+          }
+        },
+        trackedWellFormatted: function () {
+          return formatDuration(this.state.tracked)
+        }
+      }
+    })
+    new Vue({
+      el: '#issues-table',
+      data: {
+        issues: [
+          {
+            key: 'MCPGI-8',
+            title: 'Tareas Varias/No asignables',
+            link: 'http://issues.mercap.net:8080/browse/MCPGI-8'
+          },
+          {
+            key: 'GTZMANT-247',
+            title: 'Reporte de valuación muestra errores cuando se valúan contratos de futuro',
+            link: 'http://issues.mercap.net:8080/browse/GTZMANT-247'
+          },
+          {
+            key: 'IM-97',
+            title: 'Mejoras en Importación de Operaciones detectadas en la demo',
+            link: 'http://issues.mercap.net:8080/browse/IM-97'
+          }
+        ]
+      },
+      methods: {
+        logIssuesTime(event) {
+          const form = event.target
+          issuesTracked = []
+
+          for (i = 0; i < form.length; i++) {
+            if (form[i].type == "text")
+              issuesTracked.push({ 'key': form[i].attributes['data-jira-key'].value, 'time': form[i].value })
+          }
+
+          alert(JSON.stringify(issuesTracked))
+          event.preventDefault()
+        }
+      }
+    })
+  </script>
+</body>
+
+</html>
