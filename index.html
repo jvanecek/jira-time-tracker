@@ -14,19 +14,19 @@
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
     integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
     crossorigin="anonymous"></script>
-  <script src="https://kit.fontawesome.com/d2076483f4.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.10.1/css/all.css">
   <script src="https://unpkg.com/vue"></script>
-  
+
 </head>
 
 <body>
   <template id="issue-tracker-template">
     <tr :class="state.tracking ? 'table-success' : ''">
       <td>
-        <button type="button" class="btn-sm" v-on:click="startTrack">
-          <i class="fas fa-stop" v-if="state.tracking"></i>
-          <i class="fas fa-play" v-else></i>
-        </button>
+        <a role="button" class="btn" v-on:click="startTrack">
+          <i class="fas fa-pause-circle" v-if="state.tracking"></i>
+          <i class="fas fa-play-circle" v-else></i>
+        </a>
       </td>
       <td><a :href="issue.link" target="_blank">{{ issue.key }}</a></td>
       <td>{{ issue.title }}</td>
@@ -81,6 +81,7 @@
           state: {
             tracking: false,
             tracked: 0,
+            totalTracked: 0,
             lastTrackStarted: 0,
             refreshTrackingID: -1
           }
@@ -101,11 +102,13 @@
             this.state.refreshTrackingID = this.refreshTrackingTime()
           }
           else {
+            this.state.totalTracked += this.state.tracked
+            this.state.tracked = 0
             clearInterval(this.state.refreshTrackingID)
           }
         },
         trackedWellFormatted: function () {
-          return formatDuration(this.state.tracked)
+          return formatDuration(this.state.totalTracked + this.state.tracked)
         }
       }
     })
